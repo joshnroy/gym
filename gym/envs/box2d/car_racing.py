@@ -66,6 +66,9 @@ WHEEL_TEST_COLOR = np.array([1.0, 1.0, 1.0])
 TILE_WHITE_TEST_COLOR = np.array([0.0, 1.0, 0.0])
 TILE_RED_TEST_COLOR = np.array([0.0, 0.0, 1.0])
 
+BACK_TEST_COLOR1 = np.array([1., 0., 0.])
+BACK_TEST_COLOR2 = np.array([0.8, 0.2, 0.])
+
 
 class FrictionDetector(contactListener):
     def __init__(self, env):
@@ -119,6 +122,8 @@ class CarRacing(gym.Env, EzPickle):
         self.HULL_COLOR   = (0.9,0.0,0.0)
         self.TILE_WHITE_COLOR = (1., 1., 1.)
         self.TILE_RED_COLOR = (1., 0., 0.)
+        self.BACK_COLOR1 = (0., 1., 0.)
+        self.BACK_COLOR2 = (0., 0.8, 0.2)
 
         self.seed()
         self.contactListener_keepref = FrictionDetector(self)
@@ -430,12 +435,12 @@ class CarRacing(gym.Env, EzPickle):
 
     def render_road(self):
         gl.glBegin(gl.GL_QUADS)
-        gl.glColor4f(0.4, 0.8, 0.4, 1.0)
+        gl.glColor4f(self.BACK_COLOR1[0], self.BACK_COLOR1[1], self.BACK_COLOR1[2], 1.0)
         gl.glVertex3f(-PLAYFIELD, +PLAYFIELD, 0)
         gl.glVertex3f(+PLAYFIELD, +PLAYFIELD, 0)
         gl.glVertex3f(+PLAYFIELD, -PLAYFIELD, 0)
         gl.glVertex3f(-PLAYFIELD, -PLAYFIELD, 0)
-        gl.glColor4f(0.4, 0.9, 0.4, 1.0)
+        gl.glColor4f(self.BACK_COLOR2[0], self.BACK_COLOR2[1], self.BACK_COLOR2[2], 1.0)
         k = PLAYFIELD/20.0
         for x in range(-20, 20, 2):
             for y in range(-20, 20, 2):
@@ -506,6 +511,14 @@ class CarRacing(gym.Env, EzPickle):
         self.TILE_RED_COLOR = np.random.random(3)
         while np.mean((self.TILE_RED_COLOR - TILE_RED_TEST_COLOR)**2) < 0.1:
             self.road_color = np.random.random(3)
+
+        self.BACK_COLOR1 = np.random.random(3)
+        while np.mean((self.BACK_COLOR1 - BACK_TEST_COLOR1)**2) < 0.1:
+            self.BACK_COLOR1 = np.random.random(3)
+
+        self.BACK_COLOR2 = np.random.random(3)
+        while np.mean((self.BACK_COLOR2 - BACK_TEST_COLOR2)**2) < 0.1:
+            self.BACK_COLOR2 = np.random.random(3)
 
 
     def change_color_test(self):
