@@ -60,7 +60,12 @@ TRACK_WIDTH = 40/SCALE
 BORDER = 8/SCALE
 BORDER_MIN_COUNT = 4
 
-ROAD_COLOR = [0.4, 0.4, 0.4]
+HULL_TEST_COLOR = np.array([0., 0., 0.9])
+ROAD_TEST_COLOR = np.array([0.4, 0.4, 0.4])
+WHEEL_TEST_COLOR = np.array([1.0, 1.0, 1.0])
+TILE_WHITE_TEST_COLOR = np.array([0.0, 1.0, 0.0])
+TILE_RED_TEST_COLOR = np.array([0.0, 0.0, 1.0])
+
 
 class FrictionDetector(contactListener):
     def __init__(self, env):
@@ -84,9 +89,9 @@ class FrictionDetector(contactListener):
         if not tile:
             return
 
-        tile.color[0] = ROAD_COLOR[0]
-        tile.color[1] = ROAD_COLOR[1]
-        tile.color[2] = ROAD_COLOR[2]
+        tile.color[0] = self.env.road_color[0]
+        tile.color[1] = self.env.road_color[1]
+        tile.color[2] = self.env.road_color[2]
         if not obj or "tiles" not in obj.__dict__:
             return
         if begin:
@@ -108,6 +113,13 @@ class CarRacing(gym.Env, EzPickle):
 
     def __init__(self, verbose=1):
         EzPickle.__init__(self)
+        self.WHEEL_COLOR = (0.0,0.0,0.0)
+        self.WHEEL_WHITE = (0.3,0.3,0.3)
+        self.MUD_COLOR   = (0.4,0.4,0.0)
+        self.HULL_COLOR   = (0.9,0.0,0.0)
+        self.TILE_WHITE_COLOR = (1., 1., 1.)
+        self.TILE_RED_COLOR = (1., 0., 0.)
+
         self.seed()
         self.contactListener_keepref = FrictionDetector(self)
         self.world = Box2D.b2World((0,0), contactListener=self.contactListener_keepref)
@@ -125,6 +137,8 @@ class CarRacing(gym.Env, EzPickle):
 
         self.action_space = spaces.Box( np.array([-1,0,0]), np.array([+1,+1,+1]), dtype=np.float32)  # steer, gas, brake
         self.observation_space = spaces.Box(low=0, high=255, shape=(STATE_H, STATE_W, 3), dtype=np.uint8)
+
+        self.road_color = [0.4, 0.4, 0.4]
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -276,7 +290,7 @@ class CarRacing(gym.Env, EzPickle):
             t = self.world.CreateStaticBody(fixtures=self.fd_tile)
             t.userData = t
             c = 0.01*(i%3)
-            t.color = [ROAD_COLOR[0] + c, ROAD_COLOR[1] + c, ROAD_COLOR[2] + c]
+            t.color = [self.road_color[0] + c, self.road_color[1] + c, self.road_color[2] + c]
             t.road_visited = False
             t.road_friction = 1.0
             t.fixtures[0].sensor = True
@@ -288,7 +302,7 @@ class CarRacing(gym.Env, EzPickle):
                 b1_r = (x1 + side*(TRACK_WIDTH+BORDER)*math.cos(beta1), y1 + side*(TRACK_WIDTH+BORDER)*math.sin(beta1))
                 b2_l = (x2 + side* TRACK_WIDTH        *math.cos(beta2), y2 + side* TRACK_WIDTH        *math.sin(beta2))
                 b2_r = (x2 + side*(TRACK_WIDTH+BORDER)*math.cos(beta2), y2 + side*(TRACK_WIDTH+BORDER)*math.sin(beta2))
-                self.road_poly.append(( [b1_l, b1_r, b2_r, b2_l], (1,1,1) if i%2==0 else (1,0,0) ))
+                self.road_poly.append(( [b1_l, b1_r, b2_r, b2_l], self.TILE_WHITE_COLOR if i%2==0 else self.TILE_RED_COLOR ))
         self.track = track
         return True
 
@@ -306,7 +320,7 @@ class CarRacing(gym.Env, EzPickle):
                 break
             if self.verbose == 1:
                 print("retry to generate track (normal if there are not many of this messages)")
-        self.car = Car(self.world, *self.track[0][1:4])
+        self.car = Car(self.world, *self.track[0][1:4], WHEEL_COLOR=self.WHEEL_COLOR, WHEEL_WHITE=self.WHEEL_WHITE, MUD_COLOR=self.MUD_COLOR, HULL_COLOR=self.HULL_COLOR)
 
         return self.step(None)[0]
 
@@ -340,7 +354,7 @@ class CarRacing(gym.Env, EzPickle):
 
         return self.state, step_reward, done, {}
 
-    def render(self, mode='human'):
+    def render(self, mode='rgb_array'):
         assert mode in ['human', 'state_pixels', 'rgb_array']
         if self.viewer is None:
             from gym.envs.classic_control import rendering
@@ -467,6 +481,36 @@ class CarRacing(gym.Env, EzPickle):
         gl.glEnd()
         self.score_label.text = "%04i" % self.reward
         self.score_label.draw()
+
+    def change_color(self):
+        self.HULL_COLOR = np.random.random(3)
+        while np.mean((self.HULL_COLOR - HULL_TEST_COLOR)**2) < 0.1:
+            self.HULL_COLOR = np.random.random(3)
+
+        self.WHEEL_COLOR = np.random.random(3)
+        while np.mean((self.WHEEL_COLOR - WHEEL_TEST_COLOR)**2) < 0.1:
+            self.WHEEL_COLOR = np.random.random(3)
+
+        self.road_color = np.random.random(3)
+        while np.mean((self.road_color - ROAD_TEST_COLOR)**2) < 0.1:
+            self.road_color = np.random.random(3)
+
+        self.road_color = np.random.random(3)
+        while np.mean((self.road_color - ROAD_TEST_COLOR)**2) < 0.1:
+            self.road_color = np.random.random(3)
+
+        self.TILE_WHITE_COLOR = np.random.random(3)
+        while np.mean((self.TILE_WHITE_COLOR - TILE_WHITE_TEST_COLOR)**2) < 0.1:
+            self.road_color = np.random.random(3)
+
+        self.TILE_RED_COLOR = np.random.random(3)
+        while np.mean((self.TILE_RED_COLOR - TILE_RED_TEST_COLOR)**2) < 0.1:
+            self.road_color = np.random.random(3)
+
+
+    def change_color_test(self):
+        self.HULL_COLOR = HULL_TEST_COLOR
+        self.road_color = ROAD_TEST_COLOR
 
 
 if __name__=="__main__":

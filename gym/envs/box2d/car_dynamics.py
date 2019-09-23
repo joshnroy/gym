@@ -42,12 +42,15 @@ HULL_POLY4 =[
     (-50,-120), (+50,-120),
     (+50,-90),  (-50,-90)
     ]
-WHEEL_COLOR = (0.0,0.0,0.0)
-WHEEL_WHITE = (0.3,0.3,0.3)
-MUD_COLOR   = (0.4,0.4,0.0)
+# WHEEL_COLOR = (0.0,0.0,0.0)
+# WHEEL_WHITE = (0.3,0.3,0.3)
+# MUD_COLOR   = (0.4,0.4,0.0)
 
 class Car:
-    def __init__(self, world, init_angle, init_x, init_y):
+    def __init__(self, world, init_angle, init_x, init_y, WHEEL_COLOR=None, WHEEL_WHITE=None, MUD_COLOR=None, HULL_COLOR=None):
+        self.WHEEL_COLOR = WHEEL_COLOR
+        self.WHEEL_WHITE = WHEEL_WHITE
+        self.MUD_COLOR = MUD_COLOR
         self.world = world
         self.hull = self.world.CreateDynamicBody(
             position = (init_x, init_y),
@@ -59,7 +62,7 @@ class Car:
                 fixtureDef(shape = polygonShape(vertices=[ (x*SIZE,y*SIZE) for x,y in HULL_POLY4 ]), density=1.0)
                 ]
             )
-        self.hull.color = (0.8,0.0,0.0)
+        self.hull.color = HULL_COLOR
         self.wheels = []
         self.fuel_spent = 0.0
         WHEEL_POLY = [
@@ -79,7 +82,7 @@ class Car:
                     restitution=0.0)
                     )
             w.wheel_rad = front_k*WHEEL_R*SIZE
-            w.color = WHEEL_COLOR
+            w.color = self.WHEEL_COLOR
             w.gas   = 0.0
             w.brake = 0.0
             w.steer = 0.0
@@ -178,7 +181,7 @@ class Car:
                 elif w.skid_start is None:
                     w.skid_start = w.position
                 else:
-                    w.skid_particle = self._create_particle( w.skid_start, w.position, grass )
+                    w.skid_particle = self._create_particle( w.skid_start, w.position, grass, self.WHEEL_COLOR, self.MUD_COLOR)
                     w.skid_start = None
             else:
                 w.skid_start = None
@@ -220,9 +223,9 @@ class Car:
                     (-WHEEL_W*SIZE, +WHEEL_R*c1*SIZE), (+WHEEL_W*SIZE, +WHEEL_R*c1*SIZE),
                     (+WHEEL_W*SIZE, +WHEEL_R*c2*SIZE), (-WHEEL_W*SIZE, +WHEEL_R*c2*SIZE)
                     ]
-                viewer.draw_polygon([trans*v for v in white_poly], color=WHEEL_WHITE)
+                viewer.draw_polygon([trans*v for v in white_poly], color=self.WHEEL_WHITE)
 
-    def _create_particle(self, point1, point2, grass):
+    def _create_particle(self, point1, point2, grass, WHEEL_COLOR, MUD_COLOR):
         class Particle:
             pass
         p = Particle()
