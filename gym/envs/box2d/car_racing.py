@@ -39,8 +39,8 @@ from pyglet import gl
 #
 # Created by Oleg Klimov. Licensed on the same terms as the rest of OpenAI Gym.
 
-STATE_W = 96   # less than Atari 160x192
-STATE_H = 96
+STATE_W = 32   # less than Atari 160x192
+STATE_H = 32
 VIDEO_W = 600
 VIDEO_H = 400
 WINDOW_W = 1000
@@ -249,8 +249,8 @@ class CarRacing(gym.Env, EzPickle):
             elif pass_through_start and i1==-1:
                 i1 = i
                 break
-        if self.verbose == 1:
-            print("Track generation: %i..%i -> %i-tiles track" % (i1, i2, i2-i1))
+        # if self.verbose == 1:
+            # print("Track generation: %i..%i -> %i-tiles track" % (i1, i2, i2-i1))
         assert i1!=-1
         assert i2!=-1
 
@@ -323,17 +323,33 @@ class CarRacing(gym.Env, EzPickle):
             success = self._create_track()
             if success:
                 break
-            if self.verbose == 1:
-                print("retry to generate track (normal if there are not many of this messages)")
+            # if self.verbose == 1:
+                # print("retry to generate track (normal if there are not many of this messages)")
         self.car = Car(self.world, *self.track[0][1:4], WHEEL_COLOR=self.WHEEL_COLOR, WHEEL_WHITE=self.WHEEL_WHITE, MUD_COLOR=self.MUD_COLOR, HULL_COLOR=self.HULL_COLOR)
 
         return self.step(None)[0]
 
     def step(self, action):
         if action is not None:
-            self.car.steer(-action[0])
-            self.car.gas(action[1])
-            self.car.brake(action[2])
+            if action == 0:
+                self.car.steer(0)
+                self.car.gas(0.5)
+                self.car.brake(0)
+            elif action == 1:
+                self.car.steer(0)
+                self.car.gas(0)
+                self.car.brake(0.5)
+            elif action == 2:
+                self.car.steer(0.5)
+                self.car.gas(0)
+                self.car.brake(0)
+            elif action == 3:
+                self.car.steer(-0.5)
+                self.car.gas(0)
+                self.car.brake(0)
+            # self.car.steer(-action[0])
+            # self.car.gas(action[1])
+            # self.car.brake(action[2])
 
         self.car.step(1.0/FPS)
         self.world.Step(1.0/FPS, 6*30, 2*30)
@@ -359,7 +375,7 @@ class CarRacing(gym.Env, EzPickle):
 
         return self.state, step_reward, done, {}
 
-    def render(self, mode='rgb_array'):
+    def render(self, mode='state_pixels'):
         assert mode in ['human', 'state_pixels', 'rgb_array']
         if self.viewer is None:
             from gym.envs.classic_control import rendering
@@ -500,17 +516,13 @@ class CarRacing(gym.Env, EzPickle):
         while np.mean((self.road_color - ROAD_TEST_COLOR)**2) < 0.1:
             self.road_color = np.random.random(3)
 
-        self.road_color = np.random.random(3)
-        while np.mean((self.road_color - ROAD_TEST_COLOR)**2) < 0.1:
-            self.road_color = np.random.random(3)
-
         self.TILE_WHITE_COLOR = np.random.random(3)
         while np.mean((self.TILE_WHITE_COLOR - TILE_WHITE_TEST_COLOR)**2) < 0.1:
-            self.road_color = np.random.random(3)
+            self.TILE_WHITE_COLOR = np.random.random(3)
 
         self.TILE_RED_COLOR = np.random.random(3)
         while np.mean((self.TILE_RED_COLOR - TILE_RED_TEST_COLOR)**2) < 0.1:
-            self.road_color = np.random.random(3)
+            self.TILE_RED_COLOR = np.random.random(3)
 
         self.BACK_COLOR1 = np.random.random(3)
         while np.mean((self.BACK_COLOR1 - BACK_TEST_COLOR1)**2) < 0.1:
@@ -522,7 +534,14 @@ class CarRacing(gym.Env, EzPickle):
 
 
     def change_color_test(self):
-        self.HULL_COLOR = HULL_TEST_COLOR
+        self.WHEEL_COLOR = WHEEL_TEST_COLOR
+        self.WHEEL_WHITE = WHEEL_WHITE_TEST_COLOR
+        self.MUD_COLOR   = MUD_TEST_COLOR
+        self.HULL_COLOR   = HULL_TEST_COLOR
+        self.TILE_WHITE_COLOR = TILE_WHITE_TEST_COLOR
+        self.TILE_RED_COLOR = TILE_RED_TEST_COLOR
+        self.BACK_COLOR1 = BACK_TEST_COLOR1
+        self.BACK_COLOR2 = BACK_TEST_COLOR2
         self.road_color = ROAD_TEST_COLOR
 
 
@@ -558,9 +577,9 @@ if __name__=="__main__":
         while True:
             s, r, done, info = env.step(a)
             total_reward += r
-            if steps % 200 == 0 or done:
-                print("\naction " + str(["{:+0.2f}".format(x) for x in a]))
-                print("step {} total_reward {:+0.2f}".format(steps, total_reward))
+            # if steps % 200 == 0 or done:
+                # print("\naction " + str(["{:+0.2f}".format(x) for x in a]))
+                # print("step {} total_reward {:+0.2f}".format(steps, total_reward))
                 #import matplotlib.pyplot as plt
                 #plt.imshow(s)
                 #plt.savefig("test.jpeg")
