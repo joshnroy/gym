@@ -55,12 +55,16 @@ class PendulumEnv(gym.Env):
         elif a == 9:
             u = 1.0
         elif a == 10:
-            u = -1.5
+            u = -1.3
         elif a == 11:
-            u = 1.5
+            u = 1.3
         elif a == 12:
+            u = -1.6
+        elif a == 13:
+            u = 1.6
+        elif a == 14:
             u = -2.0
-        else:# a == 13:
+        else:# a == 15:
             u = 2.0
         th, thdot = self.state # th := theta
 
