@@ -64,8 +64,10 @@ class PendulumEnv(gym.Env):
             u = 1.6
         elif a == 14:
             u = -2.0
-        else:# a == 15:
+        elif a == 15:
             u = 2.0
+        else: # a == 16:
+            u = 0.
         th, thdot = self.state # th := theta
 
         g = self.g
